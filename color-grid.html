@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Grid Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:wght@300;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f0e0c;
+    color: #e8e4dc;
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  header { text-align: center; margin-bottom: 36px; }
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  header p { font-size: 0.72rem; color: #7a7670; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .color-config {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: center;
+    background: #1a1916;
+    border: 1px solid #2e2c28;
+    border-radius: 12px;
+    padding: 14px 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .color-slot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: #7a7670;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .color-slot input[type="color"] {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid #2e2c28;
+    cursor: pointer;
+    background: none;
+    padding: 2px;
+    transition: border-color 0.2s;
+  }
+  .color-slot input[type="color"]:hover { border-color: #7a7670; }
+  .color-slot input[type="text"] {
+    width: 64px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #2e2c28;
+    color: #e8e4dc;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 2px 4px;
+    outline: none;
+    text-transform: uppercase;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: #1a1916;
+    border: 1px solid #2e2c28;
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab {
+    padding: 8px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: none;
+    background: transparent;
+    color: #7a7670;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: #e8e4dc; }
+  .tab.active { background: #2e2c28; color: #e8e4dc; }
+
+  .page-label {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 0.9rem;
+    color: #7a7670;
+    margin-bottom: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Grid */
+  .grid-outer { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+
+  .grid-row { display: flex; gap: 6px; }
+
+  /* Normal cell */
+  .cell {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    border: 2px solid #2e2c28;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.12s, border-color 0.2s, box-shadow 0.2s;
+    background: #1a1916;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .cell:hover { transform: scale(1.06); border-color: #7a7670; }
+  .cell.colored { border-color: transparent; }
+  .cell.is-white { border-color: #666 !important; }
+  .cell.is-white:hover { border-color: #aaa !important; }
+  .cell.violation {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 0 2px rgba(255,68,68,0.3), inset 0 0 12px rgba(255,68,68,0.15);
+  }
+  .cell.violation::after {
+    content: '!';
+    position: absolute;
+    top: 5px; right: 7px;
+    font-size: 0.6rem;
+    color: #ff6666;
+    font-weight: bold;
+  }
+
+  /* MG merged cell */
+  .mg-cell {
+    height: 80px;
+    border-radius: 10px;
+    background: #c0484820;
+    border: 2px solid #c04848;
+    color: #e8a0a0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(192,72,72,0.15);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* MG toggle button */
+  .mg-toggle-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 1px solid #2e2c28;
+    background: #1a1916;
+    color: #7a7670;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+  }
+  .mg-toggle-btn:hover { color: #e8a0a0; border-color: #c04848; }
+  .mg-toggle-btn.mg-on {
+    background: #c0484820;
+    border-color: #c04848;
+    color: #e8a0a0;
+  }
+
+  /* Rule panel */
+  .rule-violations {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-width: 480px;
+    width: 100%;
+  }
+  .rule-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    padding: 6px 14px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    transition: all 0.25s;
+  }
+  .rule-item.pass { background: rgba(74,200,100,0.07); border-color: rgba(74,200,100,0.15); color: #4ac864; }
+  .rule-item.fail { background: rgba(255,68,68,0.08);  border-color: rgba(255,68,68,0.2);  color: #ff8888; }
+  .rule-icon { font-size: 0.75rem; }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.68rem;
+    color: #7a7670;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1a1916;
+    border: 1px solid #2e2c28;
+    border-radius: 20px;
+    padding: 5px 12px;
+  }
+  .stat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  button.ctrl {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid #2e2c28;
+    background: #1a1916;
+    color: #7a7670;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button.ctrl:hover { color: #e8e4dc; border-color: #7a7670; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Color Grid</h1>
+  <p>Click cells to cycle · Toggle last row as MG</p>
+</header>
+
+<div class="color-config">
+  <div class="color-slot">
+    <input type="color" id="pick1" value="#e85d3a">
+    <input type="text"  id="name1" value="Red"    maxlength="8">
+  </div>
+  <div class="color-slot">
+    <input type="color" id="pick2" value="#ff8c2a">
+    <input type="text"  id="name2" value="Orange" maxlength="8">
+  </div>
+  <div class="color-slot">
+    <input type="color" id="pick3" value="#f0c040">
+    <input type="text"  id="name3" value="Yellow" maxlength="8">
+  </div>
+  <div class="color-slot">
+    <input type="color" id="pick4" value="#f5f5f0">
+    <input type="text"  id="name4" value="White"  maxlength="8">
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchPage(0)">Page 1 &middot; 5x4</button>
+  <button class="tab"        onclick="switchPage(1)">Page 2 &middot; 5x3</button>
+  <button class="tab"        onclick="switchPage(2)">Page 3 &middot; 4x3</button>
+</div>
+
+<div class="page-label" id="pageLabel">Page 1 &mdash; 5 rows &times; 4 columns</div>
+
+<!-- MG toggle -->
+<button class="mg-toggle-btn" id="mgToggleBtn" onclick="toggleMG()">MG row: OFF</button>
+
+<!-- Rule checks -->
+<div class="rule-violations" id="ruleViolations"></div>
+
+<!-- Stats -->
+<div class="stats" id="statsBar"></div>
+
+<!-- Grid -->
+<div class="grid-outer" id="gridOuter"></div>
+
+<div class="controls">
+  <button class="ctrl" onclick="clearPage()">Clear page</button>
+  <button class="ctrl" onclick="clearAll()">Clear all</button>
+</div>
+
+<script>
+  const PAGES = [
+    { rows: 5, cols: 4, label: 'Page 1 \u2014 5 rows \u00d7 4 columns', reqWhite: 3, reqYellow: 3 },
+    { rows: 5, cols: 3, label: 'Page 2 \u2014 5 rows \u00d7 3 columns', reqWhite: 2, reqYellow: 2 },
+    { rows: 4, cols: 3, label: 'Page 3 \u2014 4 rows \u00d7 3 columns', reqWhite: 1, reqYellow: 1 },
+  ];
+
+  const NUM_COLORS  = 4;
+  const COLOR_YELLOW = 3;
+  const COLOR_WHITE  = 4;
+
+  let currentPage = 0;
+  // Full grid state including last row cells (rows * cols)
+  let states = PAGES.map(function(p) { return Array(p.rows * p.cols).fill(0); });
+  let mgOn   = [false, false, false];
+  let colors = ['#e85d3a', '#ff8c2a', '#f0c040', '#f5f5f0'];
+  let names  = ['Red', 'Orange', 'Yellow', 'White'];
+
+  for (var ii = 1; ii <= NUM_COLORS; ii++) {
+    (function(i) {
+      document.getElementById('pick' + i).addEventListener('input', function(e) { colors[i-1] = e.target.value; render(); });
+      document.getElementById('name' + i).addEventListener('input', function(e) { names[i-1]  = e.target.value; render(); });
+    })(ii);
+  }
+
+  function switchPage(idx) {
+    currentPage = idx;
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+    document.getElementById('pageLabel').textContent = PAGES[idx].label;
+    render();
+  }
+
+  function toggleMG() {
+    mgOn[currentPage] = !mgOn[currentPage];
+    render();
+  }
+
+  // ── Neighbours ────────────────────────────────────────────────────────────
+  function getNeighbors(idx, rows, cols) {
+    var r = Math.floor(idx / cols), c = idx % cols, n = [];
+    if (r > 0)        n.push(idx - cols);
+    if (r < rows - 1) n.push(idx + cols);
+    if (c > 0)        n.push(idx - 1);
+    if (c < cols - 1) n.push(idx + 1);
+    return n;
+  }
+
+  // ── Rules ─────────────────────────────────────────────────────────────────
+  function evaluateRules(page, state, mg) {
+    var p    = PAGES[page];
+    var rows = p.rows;
+    var cols = p.cols;
+
+    // When MG is on, last row is merged — exclude it from cell rules
+    var dataRows = mg ? rows - 1 : rows;
+    var dataSize = dataRows * cols;
+    var dataState = state.slice(0, dataSize);
+
+    // Counts
+    var whites = 0, yellows = 0;
+    dataState.forEach(function(v) {
+      if (v === COLOR_WHITE)  whites++;
+      if (v === COLOR_YELLOW) yellows++;
+    });
+
+    // Adjacent conflicts (only within data rows)
+    var adjConflicts = new Set();
+    dataState.forEach(function(v, i) {
+      if (!v) return;
+      getNeighbors(i, dataRows, cols).forEach(function(nb) {
+        if (dataState[nb] === v) { adjConflicts.add(i); adjConflicts.add(nb); }
+      });
+    });
+
+    // Top row (row 0): indices 0..cols-1
+    var whiteInTop = [];
+    for (var c = 0; c < cols; c++) {
+      if (dataState[c] === COLOR_WHITE) whiteInTop.push(c);
+    }
+
+    // Bottom data row: last row of dataRows
+    var whiteInBottom = [];
+    for (var c2 = 0; c2 < cols; c2++) {
+      var idx = (dataRows - 1) * cols + c2;
+      if (dataState[idx] === COLOR_WHITE) whiteInBottom.push(idx);
+    }
+
+    // No red in row before MG row (row 4 for 5-row layouts, row 3 for 4-row layout)
+    var redInRow4 = [];
+    if (mg) {
+      var noRedRow = p.rows - 2; // last data row before MG (0-indexed)
+      for (var c3 = 0; c3 < cols; c3++) {
+        var r4idx = noRedRow * cols + c3;
+        if (state[r4idx] === 1) redInRow4.push(r4idx);
+      }
+    }
+
+    // Build violation set for cell highlighting
+    var violations = new Set();
+    adjConflicts.forEach(function(i) { violations.add(i); });
+    whiteInTop.forEach(function(i) { violations.add(i); });
+    if (!mg) { whiteInBottom.forEach(function(i) { violations.add(i); }); }
+    redInRow4.forEach(function(i) { violations.add(i); });
+
+    // Rule messages
+    var rules = [
+      {
+        label: 'No two adjacent cells share the same color',
+        pass: adjConflicts.size === 0,
+      },
+      {
+        label: 'White cells: ' + whites + ' / ' + p.reqWhite + ' required',
+        pass: whites === p.reqWhite,
+      },
+      {
+        label: 'Yellow cells: ' + yellows + ' / ' + p.reqYellow + ' required',
+        pass: yellows === p.reqYellow,
+      },
+      {
+        label: 'No white in top row',
+        pass: whiteInTop.length === 0,
+      },
+      mg
+        ? { label: 'MG ON \u2014 white allowed before last row', pass: true }
+        : { label: 'No white in bottom row (MG off)', pass: whiteInBottom.length === 0 },
+    ].concat(mg ? [{ label: 'No red cells in last row before MG', pass: redInRow4.length === 0 }] : []);
+
+    return { rules: rules, violations: violations, dataSize: dataSize };
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function render() {
+    var p    = PAGES[currentPage];
+    var rows = p.rows;
+    var cols = p.cols;
+    var state = states[currentPage];
+    var mg    = mgOn[currentPage];
+
+    var result = evaluateRules(currentPage, state, mg);
+    var violations = result.violations;
+
+    // MG button
+    var btn = document.getElementById('mgToggleBtn');
+    btn.textContent = mg ? 'MG row: ON' : 'MG row: OFF';
+    btn.className = 'mg-toggle-btn' + (mg ? ' mg-on' : '');
+
+    // Rule panel
+    document.getElementById('ruleViolations').innerHTML = result.rules.map(function(r) {
+      return '<div class="rule-item ' + (r.pass ? 'pass' : 'fail') + '">' +
+             '<span class="rule-icon">' + (r.pass ? '✓' : '✕') + '</span>' + r.label + '</div>';
+    }).join('');
+
+    // Grid
+    var outer = document.getElementById('gridOuter');
+    outer.innerHTML = '';
+
+    // Total pixel width for the MG cell
+    var totalW = cols * 80 + (cols - 1) * 6;
+
+    for (var r = 0; r < rows; r++) {
+      var rowEl = document.createElement('div');
+      rowEl.className = 'grid-row';
+
+      var isLastRow = (r === rows - 1);
+
+      if (isLastRow && mg) {
+        // Merged MG cell
+        var mgCell = document.createElement('div');
+        mgCell.className = 'mg-cell';
+        mgCell.style.width = totalW + 'px';
+        mgCell.textContent = 'MG';
+        rowEl.appendChild(mgCell);
+      } else {
+        // Normal cells
+        for (var c = 0; c < cols; c++) {
+          var idx = r * cols + c;
+          var val = state[idx];
+          var isWhite = (val === COLOR_WHITE);
+
+          var cell = document.createElement('div');
+          var cls  = 'cell';
+          if (val)              cls += ' colored';
+          if (isWhite)          cls += ' is-white';
+          if (violations.has(idx)) cls += ' violation';
+          cell.className = cls;
+          if (val) cell.style.background = colors[val - 1];
+          cell.title = val ? names[val - 1] : 'Empty';
+
+          (function(cellIdx, cellVal) {
+            cell.addEventListener('click', function() {
+              states[currentPage][cellIdx] = (cellVal + 1) % (NUM_COLORS + 1);
+              render();
+            });
+          })(idx, val);
+
+          rowEl.appendChild(cell);
+        }
+      }
+
+      outer.appendChild(rowEl);
+    }
+
+    // Stats (count only non-MG cells)
+    var dataRows = mg ? rows - 1 : rows;
+    var dataState = state.slice(0, dataRows * cols);
+    var counts = [0, 0, 0, 0];
+    dataState.forEach(function(v) { if (v) counts[v - 1]++; });
+    var filled = counts.reduce(function(a, b) { return a + b; }, 0);
+    var total  = dataRows * cols;
+
+    document.getElementById('statsBar').innerHTML =
+      [0, 1, 2, 3].map(function(i) {
+        return '<div class="stat-chip">' +
+          '<div class="stat-dot" style="background:' + colors[i] + '"></div>' +
+          (names[i] || 'Color ' + (i + 1)) + ': ' + counts[i] + '</div>';
+      }).join('') +
+      '<div class="stat-chip" style="color:#7a7670">Filled: ' + filled + '/' + total + '</div>';
+  }
+
+  function clearPage() {
+    var p = PAGES[currentPage];
+    states[currentPage] = Array(p.rows * p.cols).fill(0);
+    mgOn[currentPage] = false;
+    render();
+  }
+
+  function clearAll() {
+    states = PAGES.map(function(p) { return Array(p.rows * p.cols).fill(0); });
+    mgOn = [false, false, false];
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>
