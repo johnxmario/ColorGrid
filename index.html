@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Color Grid Tool</title>
+<title>Jogo Regras do layout</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:wght@300;600&display=swap');
 
@@ -350,8 +350,8 @@
 <body>
 
 <header>
-  <h1>Color Grid</h1>
-  <p>Click cells to cycle · Toggle last row as MG</p>
+  <h1>Jogo Regras do layout</h1>
+  <p>Escolher o layout e clicar nas quadriculas para escolher a cor</p>
 </header>
 
 <div class="color-config">
@@ -382,15 +382,15 @@
 <div class="page-label" id="pageLabel">Page 1 &mdash; 5 rows &times; 4 columns</div>
 
 <!-- MG toggle -->
-<button class="mg-toggle-btn" id="mgToggleBtn" onclick="toggleMG()">MG row: OFF</button>
+<button class="mg-toggle-btn" id="mgToggleBtn" onclick="toggleMG()">Marca Guia: OFF</button>
 
 <!-- Spotlight toggle -->
 <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:center; margin-bottom:4px;">
-  <button class="sp-toggle-btn" id="spToggleBtn" onclick="toggleSpotlight()">Spotlight: OFF</button>
+  <button class="sp-toggle-btn" id="spToggleBtn" onclick="toggleSpotlight()">Destaque: OFF</button>
 </div>
 
 <!-- Appraise -->
-<div class="appraise" id="appraise">🎉 Perfect layout — all rules satisfied!</div>
+<div class="appraise" id="appraise">🎉 Perfectto! — Todas as regras estão OK!</div>
 
 <!-- Rule checks -->
 <div class="rule-violations" id="ruleViolations"></div>
@@ -533,25 +533,25 @@
     // Rule messages
     var rules = [
       {
-        label: 'No two adjacent cells share the same color',
+        label: 'Não pode haver duas cores adjacentes',
         pass: adjConflicts.size === 0,
       },
       {
-        label: 'White cells: ' + whites + ' / ' + p.reqWhite + ' required',
+        label: 'Quadrados brancos: ' + whites + ' / ' + p.reqWhite + ' required',
         pass: whites === p.reqWhite,
       },
       {
-        label: 'Yellow cells: ' + yellows + ' / ' + p.reqYellow + ' required',
+        label: 'Quadrados amarelos: ' + yellows + ' / ' + p.reqYellow + ' required',
         pass: yellows === p.reqYellow,
       },
       {
-        label: 'No white in top row',
+        label: 'Não pode haver brancos na primeira linha',
         pass: whiteInTop.length === 0,
       },
       mg
-        ? { label: 'MG ON \u2014 white allowed before last row', pass: true }
-        : { label: 'No white in bottom row (MG off)', pass: whiteInBottom.length === 0 },
-    ].concat(mg ? [{ label: 'No red cells in last row before MG', pass: redInRow4.length === 0 }] : []);
+        ? { label: 'Marca guia: ON \u2014 Pode haver branco na penultima linha', pass: true }
+        : { label: 'Não pode haver branco na (Marca guia: OFF)', pass: whiteInBottom.length === 0 },
+    ].concat(mg ? [{ label: 'Não pode haver quadrados vermelhos antes da zona Marga guia', pass: redInRow4.length === 0 }] : []);
 
     return { rules: rules, violations: violations, dataSize: dataSize };
   }
